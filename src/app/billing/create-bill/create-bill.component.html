@@ -70,9 +70,10 @@
               <td>Discount %</td>
               <td>Free</td>
               <td>Expiry</td>
-              <td>Rate</td>
+              <td>Sale Rate</td>
               <td>MRP</td>
               <td>Tax</td>
+              <td>Amount</td>
               <td>Total Amount</td>
             </tr>
           </thead>
@@ -87,9 +88,10 @@
                 <td>{{ product.discountPercent }}</td>
                 <td>{{ product.free }}</td>
                 <td>{{ product.expirydate | date }}</td>
-                <td>{{ product.rate |number: '1.0-2' }}</td>
+                <td>{{ product.saleRate |number: '1.0-2' }}</td>
                 <td>{{ product.mrp |number: '1.0-2' }}</td>
                 <td>{{ product.totalTax |number: '1.0-2'}}</td>
+                <td>{{ product.totalAmountExcludingTax |number: '1.0-2'}}</td>
                 <td>{{ product.totalAmount |number: '1.0-2' }}</td>
               </tr>
             </ng-container>
@@ -196,6 +198,7 @@
               <p><b>Batch</b>: {{ selectedBatch?.batchNumber }}</p>
               <p><b>Expiry</b>: {{ selectedBatch?.expirydate | date }}</p>
               <p><b>MRP</b>: {{ selectedBatch?.mrp }}</p>
+              <p><b>Sale Rate</b>: {{ selectedBatch?.saleRate }}</p>
               <p>
                 <b>Available Quantity</b>: {{ selectedBatch?.saleQuantity }}
               </p>

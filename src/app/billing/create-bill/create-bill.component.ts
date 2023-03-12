@@ -1,7 +1,10 @@
 import { Component } from '@angular/core';
 import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ModalDismissReasons, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ClientService } from 'src/app/client/service/client.service';
+import { ProductService } from 'src/app/product/services/product.service';
 import { AlertType } from '../../shared/error-success/error-success.component';
+import { BillingService } from '../service/billing.service';
 
 @Component({
   selector: 'app-createinvoice',
@@ -29,15 +32,19 @@ export class CreateBillComponent {
   };
 
   productAlerts = {
-    createBillValidationError: false
-  }
+    createBillValidationError: false,
+  };
 
   createBillValidationErrorInfo = {
     type: AlertType.error,
-    message: ''
-  }
+    message: '',
+  };
 
-  constructor() {}
+  constructor(
+    private clientService: ClientService,
+    private productService: ProductService,
+    private billingService: BillingService
+  ) {}
 
   productForm = new FormGroup({
     quantity: new FormControl<number>(0, [
@@ -111,16 +118,14 @@ export class CreateBillComponent {
   }
 
   addProduct() {
-    const batchProductValidation =this.batchProductAdditionalValidation()
-    if (
-      this.productForm.invalid ||
-      batchProductValidation.length>0
-    ) {
+    // while addidng product make sure seected quantity< available quantity
+    const batchProductValidation = this.batchProductAdditionalValidation();
+    if (this.productForm.invalid || batchProductValidation.length > 0) {
       this.productForm.markAllAsTouched();
-      this.createBillValidationErrorInfo.message = batchProductValidation.join(",");
+      this.createBillValidationErrorInfo.message =
+        batchProductValidation.join(',');
       this.productAlerts.createBillValidationError = true;
       return;
-      
     }
     let productDetails = {
       productId: this.selectedProduct._id,
@@ -132,19 +137,18 @@ export class CreateBillComponent {
 
       batchNumber: this.selectedBatch.batchNumber,
       expirydate: this.selectedBatch.expirydate,
-      cgstPercent: this.selectedBatch.cgstPercent,
-      sgstPercent: this.selectedBatch.sgstPercent,
-      igstPercent: this.selectedBatch.igstPercent,
+      saleCgstPercent: this.selectedBatch.saleCgstPercent,
+      saleSgstPercent: this.selectedBatch.saleSgstPercent,
+      saleIgstPercent: this.selectedBatch.saleIgstPercent,
       totalTax: this.selectedBatch.totalTax,
       margin: this.selectedBatch.margin,
       mrp: this.selectedBatch.mrp,
-      rate: this.selectedBatch.rate,
+      saleRate: this.selectedBatch.saleRate,
       purchaseRate: this.selectedBatch.purchaseRate,
       invoiceRate: this.selectedBatch.invoiceRate,
-      saleRate: this.selectedBatch.saleRate,
-      cgstAmount: this.selectedBatch.cgstAmount,
-      sgstAmount: this.selectedBatch.sgstAmount,
-      igstAmount: this.selectedBatch.igstAmount,
+      saleCgstAmount: this.selectedBatch.saleCgstAmount,
+      saleSgstAmount: this.selectedBatch.saleSgstAmount,
+      saleIgstAmount: this.selectedBatch.saleIgstAmount,
       totalAmountExcludingTax: this.selectedBatch.totalAmountExcludingTax,
       totalAmount: this.selectedBatch.totalAmount,
       outer: this.selectedBatch?.outer,
@@ -176,8 +180,20 @@ export class CreateBillComponent {
   }
 
   createBill() {
-    // make sure bill has atleast one product
+    // Show alert when billing info is incorrect
+    if (this.billDetail.products.length === 0) {
+      console.error('in valid billing details', this.billDetail);
+      return;
+    }
     console.log('Bill to be created: ', this.billDetail);
+    this.billingService.createBill(this.billDetail).subscribe(
+      (data) => {
+        console.log('Bill Created', data);
+      },
+      (error) => {
+        console.error('Failed to create bill', error);
+      }
+    );
   }
 
   // CLIENT SEARCH OPTION START
@@ -251,27 +267,27 @@ export class CreateBillComponent {
   }
   selectedBatchCalculations() {
     this.selectedBatch.totalAmountExcludingTax =
-      this.selectedBatch.rate * this.SeletctedProductQuantity;
+      this.selectedBatch.saleRate * this.SeletctedProductQuantity;
 
-    this.selectedBatch.cgstAmount =
+    this.selectedBatch.saleCgstAmount =
       (this.selectedBatch.totalAmountExcludingTax *
-        this.selectedBatch.cgstPercent) /
+        this.selectedBatch.saleCgstPercent) /
       100;
 
-    this.selectedBatch.sgstAmount =
+    this.selectedBatch.saleSgstAmount =
       (this.selectedBatch.totalAmountExcludingTax *
-        this.selectedBatch.sgstPercent) /
+        this.selectedBatch.saleSgstPercent) /
       100;
 
-    this.selectedBatch.igstAmount =
+    this.selectedBatch.saleIgstAmount =
       (this.selectedBatch.totalAmountExcludingTax *
-        this.selectedBatch.igstPercent) /
+        this.selectedBatch.saleIgstPercent) /
       100;
 
     this.selectedBatch.totalTax =
-      this.selectedBatch.cgstAmount +
-      this.selectedBatch.sgstAmount +
-      this.selectedBatch.igstAmount;
+      this.selectedBatch.saleCgstAmount +
+      this.selectedBatch.saleSgstAmount +
+      this.selectedBatch.saleIgstAmount;
 
     this.selectedBatch.totalAmount =
       this.selectedBatch.totalAmountExcludingTax + this.selectedBatch.totalTax;
@@ -288,15 +304,17 @@ export class CreateBillComponent {
     this.billDetail.totalTaxAmount = 0;
     this.billDetail.totalAmountExcludingTax = 0;
     this.billDetail.finalAmount = 0;
+    this.billDetail.amountToCollect = 0;
     for (const product of this.billDetail.products) {
-      this.billDetail.totalCgstAmount += product.cgstAmount;
-      this.billDetail.totalSgstAmount += product.sgstAmount;
-      this.billDetail.totalIgstAmount += product.igstAmount;
+      this.billDetail.totalCgstAmount += product.saleCgstAmount;
+      this.billDetail.totalSgstAmount += product.saleSgstAmount;
+      this.billDetail.totalIgstAmount += product.saleIgstAmount;
       this.billDetail.totalTaxAmount += product.totalTax;
       this.billDetail.totalAmountExcludingTax +=
         product.totalAmountExcludingTax;
       this.billDetail.finalAmount += product.totalAmount;
     }
+    this.billDetail.amountToCollect = this.billDetail.finalAmount
 
     console.log(
       this.billDetail.totalCgstAmount,
@@ -309,322 +327,32 @@ export class CreateBillComponent {
   }
 
   getClientList() {
-    return [
-      {
-        _id: 1,
-        name: 'pankaj medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
+    this.clientService.getAllClients().subscribe(
+      (data) => {
+        console.log('client fetched list', data);
+
+        this.clientList = data;
       },
-      {
-        _id: 2,
-        name: 'akash medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 3,
-        name: 'deepak medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 3,
-        name: 'shivam medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 1,
-        name: 'nandan medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 2,
-        name: 'prince medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 3,
-        name: 'jaya medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 3,
-        name: 'jayant medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 1,
-        name: 'nandan medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 2,
-        name: 'prince medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 3,
-        name: 'jaya medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 3,
-        name: 'jayant medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 1,
-        name: 'nandan medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-      {
-        _id: 2,
-        name: 'prince medical',
-        address1: 'Shop 111 ',
-        address2: 'Vasia',
-      },
-      {
-        _id: 3,
-        name: 'jaya medical',
-        address1:
-          'Shop 111 <textarea formControlName="deliveryAddress" class="form-control"></textarea> ',
-        address2: 'Vasia',
-      },
-      {
-        _id: 3,
-        name: 'jayant medical',
-        address1: 'Shop 111',
-        address2: 'Vasia',
-      },
-    ];
+      (error) => {
+        console.error('Failed to get client details', error);
+      }
+    );
   }
 
   getProductList() {
-    return [
-      {
-        _id: '63d53f37bf42979ef7386090',
-        name: 'CUFFGON',
-        company: {
-          _id: '63d53f1bbf42979ef738608e',
-          name: 'sag',
-          address1: 'gurugram',
-          landmark: 'noida',
-          pincode: 213456,
-          state: 'haryana',
-          country: 'india',
-          gstIn: '75675ADSG',
-          email: 'string@email.com',
-          mobile1: '9087867678',
-          mobile2: '9087867637',
-          createdAt: '2023-01-28T15:28:27.382Z',
-          updatedAt: '2023-01-28T15:28:27.382Z',
-          __v: 0,
-        },
-        productType: 'syrup',
-        productCategory: 'others',
-        hsnCode: 'sdc',
-        batch: [
-          {
-            batchNumber: 'STRING-1',
-            opQuantity: 1,
-            purchaseQuantity: 129,
-            saleQuantity: 31,
-            supplier: 'string',
-            discountPercent: 1,
-            cgstPercent: 1,
-            sgstPercent: 1,
-            igstPercent: 1,
-            totalTax: 150,
-            totalAmountExcludingTax: 550,
-            finalAmount: 750,
-            expirydate: '2023-12-31T18:30:00.000Z',
-            margin: 1,
-            mrp: 1,
-            rate: 1,
-            purchaseRate: 1,
-            invoiceRate: 1,
-            saleRate: 1,
-            outer: 1,
-            createdAt: '2023-01-29T10:02:35.999Z',
-            updatedAt: '2023-01-29T10:02:35.999Z',
-          },
-          {
-            batchNumber: 'STRING-2',
-            opQuantity: 1,
-            purchaseQuantity: 1,
-            saleQuantity: 1,
-            supplier: 'string',
-            discountPercent: 1,
-            cgstPercent: 1,
-            sgstPercent: 1,
-            igstPercent: 1,
-            totalTax: 50,
-            totalAmountExcludingTax: 500,
-            finalAmount: 550,
-            expirydate: '2023-12-31T18:30:00.000Z',
-            margin: 1,
-            mrp: 1,
-            rate: 1,
-            purchaseRate: 1,
-            invoiceRate: 1,
-            saleRate: 1,
-            outer: 1,
-            createdAt: '2023-01-29T10:02:49.900Z',
-            updatedAt: '2023-01-29T10:02:49.900Z',
-          },
-        ],
-        createdAt: '2023-01-28T15:28:55.662Z',
-        updatedAt: '2023-01-29T11:51:20.068Z',
-        __v: 0,
-        stockQuantity: 32,
+    this.productService.getAllProducts().subscribe(
+      (data) => {
+        console.log('product fetched list', data);
+        this.productList = data;
       },
-      {
-        _id: '63d6206c14442024feebe882',
-        name: 'algi-m',
-        company: {
-          _id: '63d53f1bbf42979ef738608e',
-          name: 'sag',
-          address1: 'gurugram',
-          landmark: 'noida',
-          pincode: 213456,
-          state: 'haryana',
-          country: 'india',
-          gstIn: '75675ADSG',
-          email: 'string@email.com',
-          mobile1: '9087867678',
-          mobile2: '9087867637',
-          createdAt: '2023-01-28T15:28:27.382Z',
-          updatedAt: '2023-01-28T15:28:27.382Z',
-          __v: 0,
-        },
-        productType: 'syrup',
-        productCategory: 'others',
-        hsnCode: 'sfcsdcsf',
-        batch: [
-          {
-            batchNumber: 'STRING-1',
-            opQuantity: 1,
-            purchaseQuantity: 1,
-            saleQuantity: 1,
-            supplier: 'string',
-            discountPercent: 1,
-            cgstPercent: 1,
-            sgstPercent: 1,
-            igstPercent: 1,
-            totalTax: 50,
-            totalAmountExcludingTax: 500,
-            finalAmount: 550,
-            expirydate: '2023-12-31T18:30:00.000Z',
-            margin: 1,
-            mrp: 1,
-            rate: 1,
-            purchaseRate: 1,
-            invoiceRate: 1,
-            saleRate: 1,
-            outer: 1,
-            createdAt: '2023-01-29T11:29:15.616Z',
-            updatedAt: '2023-01-29T11:29:15.616Z',
-          },
-          {
-            batchNumber: 'STRING-2',
-            opQuantity: 1,
-            purchaseQuantity: 1,
-            saleQuantity: 1,
-            supplier: 'string',
-            discountPercent: 1,
-            cgstPercent: 1,
-            sgstPercent: 1,
-            igstPercent: 1,
-            totalTax: 50,
-            totalAmountExcludingTax: 500,
-            finalAmount: 550,
-            expirydate: '2023-12-31T18:30:00.000Z',
-            margin: 1,
-            mrp: 1,
-            rate: 1,
-            purchaseRate: 1,
-            invoiceRate: 1,
-            saleRate: 1,
-            outer: 1,
-            createdAt: '2023-01-29T11:29:19.037Z',
-            updatedAt: '2023-01-29T11:29:19.037Z',
-          },
-        ],
-        createdAt: '2023-01-29T07:29:48.413Z',
-        updatedAt: '2023-01-29T11:29:19.047Z',
-        __v: 0,
-        stockQuantity: 2,
-      },
-      {
-        _id: '63d75e3212f1c7216d2248d8',
-        name: 'EGYP-2',
-        company: {
-          _id: '63d53f1bbf42979ef738608e',
-          name: 'sag',
-          address1: 'gurugram',
-          landmark: 'noida',
-          pincode: 213456,
-          state: 'haryana',
-          country: 'india',
-          gstIn: '75675ADSG',
-          email: 'string@email.com',
-          mobile1: '9087867678',
-          mobile2: '9087867637',
-          createdAt: '2023-01-28T15:28:27.382Z',
-          updatedAt: '2023-01-28T15:28:27.382Z',
-          __v: 0,
-        },
-        productType: 'syrup',
-        productCategory: 'others',
-        hsnCode: 'kdsfjvhd',
-        batch: [],
-        createdAt: '2023-01-30T06:05:38.751Z',
-        updatedAt: '2023-01-30T06:05:38.751Z',
-        __v: 0,
-      },
-      {
-        _id: '63d75e7112f1c7216d2248dc',
-        name: 'VAIBHAV',
-        company: {
-          _id: '63d53f1bbf42979ef738608e',
-          name: 'sag',
-          address1: 'gurugram',
-          landmark: 'noida',
-          pincode: 213456,
-          state: 'haryana',
-          country: 'india',
-          gstIn: '75675ADSG',
-          email: 'string@email.com',
-          mobile1: '9087867678',
-          mobile2: '9087867637',
-          createdAt: '2023-01-28T15:28:27.382Z',
-          updatedAt: '2023-01-28T15:28:27.382Z',
-          __v: 0,
-        },
-        productType: 'syrup',
-        productCategory: 'others',
-        hsnCode: 'df',
-        batch: [],
-        createdAt: '2023-01-30T06:06:41.208Z',
-        updatedAt: '2023-01-30T06:06:41.208Z',
-        __v: 0,
-      },
-    ];
+      (error) => {
+        console.error('Failed to get product details', error);
+      }
+    );
   }
 
   ngOnInit() {
-    this.productList = this.getProductList();
-    this.clientList = this.getClientList();
+    this.getProductList();
+    this.getClientList();
   }
 }

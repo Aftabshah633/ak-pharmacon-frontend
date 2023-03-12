@@ -18,14 +18,14 @@ export class CreateProductComponent {
   constructor(
     private productService: ProductService,
     private comapanyService: CompanyService,
-    private router:Router
-  ) { }
+    private router: Router
+  ) {}
 
   createBatchUrl = productUrl.createBatch;
   productHomeUrl = productUrl.home;
-  
+
   createdProduct: any = null;
-  
+
   createProductFormUi = true;
 
   createProductLoader = false;
@@ -62,6 +62,8 @@ export class CreateProductComponent {
     productCategory: new FormControl(''),
     productType: new FormControl('', Validators.required),
     hsnCode: new FormControl('', Validators.required),
+    // In UI create input field for this
+    thresholdStockQuantity : new FormControl(1, Validators.required)
   });
 
   get name() {
@@ -81,10 +83,6 @@ export class CreateProductComponent {
   }
 
   goToCreateBatch() {
-    this.createdProduct = {
-      _id: "63e7616ebba179fa18ef3f0a"
-    };
-
     this.router.navigate([this.createBatchUrl + '/' + this.createdProduct._id]);
   }
 
@@ -96,8 +94,10 @@ export class CreateProductComponent {
       return;
     }
     this.createProductLoader = true;
+
+    
     this.productService.createProduct(this.createProductForm.value).subscribe(
-      (data:any) => {
+      (data: any) => {
         this.createProductLoader = false;
         this.productAlerts.productCreated = true;
         console.log('CreatedProduct: ', data);

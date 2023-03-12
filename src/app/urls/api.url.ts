@@ -2,8 +2,9 @@ import { environment } from "src/environments/environment"
 
 export const apiPrefixs = {
     product: `${environment.domain}/product`,
-    billing: `${environment.domain}/billings`,
-    company: `${environment.domain}/company`
+    billing: `${environment.domain}/bill`,
+    company: `${environment.domain}/company`,
+    client: `${environment.domain}/client`,
 }
 
 export const productApiUrl = {
@@ -17,4 +18,12 @@ export const productApiUrl = {
 
 export const companyApiUrl = {
     getAllCompanies: `${apiPrefixs.company}/all`
+}
+
+export  const clientApiUrl = {
+    getAllClients: `${apiPrefixs.client}/all`
+}
+
+export const billApiUrl = {
+    createBill: `${apiPrefixs.billing}/create`
 }

@@ -5,23 +5,19 @@ import { ProductService } from '../../product/services/product.service';
 @Component({
   selector: 'app-billing-home',
   templateUrl: './billing-home.component.html',
-  styleUrls: ['./billing-home.component.scss']
+  styleUrls: ['./billing-home.component.scss'],
 })
 export class BillingHomeComponent {
-
-  productData:any;
-  constructor(
-    // private readonly productService: ProductService
-  ){}
+  productData: any;
+  constructor() // private readonly productService: ProductService
+  {}
 
   createBillForm = new FormGroup({
-    name : new FormControl('', Validators.required),
-    company : new FormControl('', 
-      [Validators.required]
-    ),
-    productCategory : new FormControl(''),
-    productType : new FormControl('',Validators.required),
-    hsnCode : new FormControl('', Validators.required),
+    name: new FormControl('', Validators.required),
+    company: new FormControl('', [Validators.required]),
+    productCategory: new FormControl(''),
+    productType: new FormControl('', Validators.required),
+    hsnCode: new FormControl('', Validators.required),
   });
 
   get name() {
@@ -40,15 +36,14 @@ export class BillingHomeComponent {
     return this.createBillForm.get('hsnCode');
   }
 
-
-  createBill(){
+  createBill() {
     console.log('callig create product api');
-    if(this.createBillForm.invalid){
+    if (this.createBillForm.invalid) {
       console.log('form is invalid');
       this.createBillForm.markAllAsTouched();
       return;
     }
-    
+
     // this.productService.createProduct(this.createBillForm.value).subscribe((data)=>{
     //   console.log('CreatedProduct: ',data);
     //   this.createBillForm.reset();
@@ -57,11 +52,9 @@ export class BillingHomeComponent {
     // })
   }
 
-  ngOnInit(){
-    // this.productService.getAllProducts().subscribe(
-    //   data=>{
 
-    //   }
-    // )
+
+  ngOnInit() {
+    // this.productService.getAllProducts().subscribe((data) => {});
   }
 }

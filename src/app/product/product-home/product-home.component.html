@@ -1,11 +1,8 @@
-
-
 <!-- product list -->
 <div>
   <div class="container-fluid">
-    
     <div class="row justify-content-between my-2">
-      <div class="col-12  col-md-3">
+      <div class="col-12 col-md-3">
         <span class="h1">Product List</span>
       </div>
       <div class="col-12 col-md-2">
@@ -39,6 +36,7 @@
         <div class="product-header p-2">
           <h4 class="d-inline">{{ i + 1 }}) {{ product?.name | uppercase }}</h4>
           <button
+            *ngIf="product.batch.length"
             class="btn btn-success my-4"
             (click)="visibleBatchProductId = product._id"
           >
