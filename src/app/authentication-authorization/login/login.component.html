@@ -1,0 +1,110 @@
+<!-- login -->
+<div class="animated fadeIn">
+  <h2 class="card__title">USER LOGIN</h2>
+
+  <form [formGroup]="loginForm" (ngSubmit)="loginData()">
+    <div class="card__form card_form_login">
+      <div class="wrap-input3">
+        <span class="label-input100">Phone</span>
+        <input
+          [class.is-invalid]="
+            loginForm.get('mobile1').invalid && loginForm.get('mobile1').touched
+          "
+          class="input3"
+          type="tel"
+          formControlName="mobile1"
+          id="PhoneNumber"
+          aria-describedby="emailHelp"
+          placeholder="Phone Number"
+          pattern="^([6-9][0-9]{9})$"
+        />
+        <span class="focus-input3"></span>
+      </div>
+      <small
+        *ngIf="
+          loginForm.get('mobile1').invalid &&
+          loginForm.get('mobile1').touched &&
+          loginForm.get('mobile1')['errors']['required']
+        "
+        class="text-danger"
+        >Phone Number is required
+      </small>
+      <small
+        *ngIf="
+          loginForm.get('mobile1').invalid &&
+          loginForm.get('mobile1').touched &&
+          loginForm.get('mobile1').errors['pattern']
+        "
+        class="text-danger"
+        >Invalid Mobile
+      </small>
+
+      <div>
+        <div class="wrap-input3">
+          <div class="label-input100">Password</div>
+          <div>
+            <input
+              [class.is-invalid]="
+                loginForm.get('mobile1').invalid &&
+                loginForm.get('mobile1').touched
+              "
+              class="input4"
+              [type]="hidePassword ? 'password' : 'text'"
+              formControlName="password"
+              id="exampleInputPassword1"
+              placeholder="Password"
+            />
+
+            <span class="material-icons" (click)="hidePassword = !hidePassword">
+              <!-- {{ hidePassword ? 'visibility' : 'visibility_off'}} -->
+              <img class="eye-icon" src="assets/images/eye.png" />
+            </span>
+          </div>
+          <span class="focus-input3"></span>
+        </div>
+        <small
+          *ngIf="
+            loginForm.get('password').invalid &&
+            loginForm.get('password').touched &&
+            loginForm.get('password').errors['required']
+          "
+          class="text-danger"
+          >Password is required
+        </small>
+        <small
+          *ngIf="
+            loginForm.get('password').invalid &&
+            loginForm.get('password').touched &&
+            loginForm.get('password').errors['minlength']
+          "
+          class="text-danger"
+        >
+          Password should be atleast
+          {{ loginForm.get("password")['errors']['minlength']['requiredLength'] }}
+          characters
+        </small>
+      </div>
+
+      <app-error-success
+        *ngIf="loginWrongCredentialsAlert"
+        [data]="{ type: 'error', message: 'Wrong credentials' }"
+        (close)="loginWrongCredentialsAlert = !loginWrongCredentialsAlert"
+      >
+      </app-error-success>
+      <app-error-success
+        *ngIf="errorAlertLogin"
+        [data]="{ type: 'error', message: 'Something went Wrong' }"
+        (close)="errorAlertLogin = !errorAlertLogin"
+      >
+      </app-error-success>
+
+      <button
+        class="card__btn mt-5 py-3 px-3"
+        (click)="loginData()"
+        [disabled]="disableButton"
+      >
+        Sign in
+      </button>
+    </div>
+  </form>
+</div>

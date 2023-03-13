@@ -1,13 +1,18 @@
 
 export const modulesUrl = {
     product: 'product',
-    billing: 'billing'
+    billing: 'billing',
+    user: 'user'
 }
 
 export const productRouting = {
     home: '',
     create: 'create',
     createBatch: 'batch/create'
+}
+
+export const userRouting = {
+    login: `login`
 }
 
 export const productUrl = {
@@ -20,5 +25,8 @@ export const billingUrl = {
     home: `${modulesUrl.billing}`
 }
 
+export const userUrl = {
+    login: `${modulesUrl.user}/${userRouting.login}`
+}
 
 

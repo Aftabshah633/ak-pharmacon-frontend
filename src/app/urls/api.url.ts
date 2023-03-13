@@ -5,6 +5,7 @@ export const apiPrefixs = {
     billing: `${environment.domain}/bill`,
     company: `${environment.domain}/company`,
     client: `${environment.domain}/client`,
+    user: `${environment.domain}/user`
 }
 
 export const productApiUrl = {
@@ -26,4 +27,10 @@ export  const clientApiUrl = {
 
 export const billApiUrl = {
     createBill: `${apiPrefixs.billing}/create`
+}
+
+export const userApiUrl = {
+    createUser: `${apiPrefixs.user}/create`,
+    login: `${apiPrefixs.user}/login`,
+    logout: `${apiPrefixs.user}/logout`
 }
